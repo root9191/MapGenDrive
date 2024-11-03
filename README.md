@@ -21,11 +21,9 @@ Diese Datei verwaltet die Anmeldeinformationen für die Netzwerkfreigaben.
 ```
 IP;User;Password
 192.168.1.10;DOMAIN\user1;Pass123!
-192.168.1.10;user1@domain.local;Pass123!
-\\SERVER1;DOMAIN\user1;Pass123!
-\\SERVER1;user1@domain.local;Pass123!
+SERVER1;DOMAIN\user1;Pass123!
 192.168.1.20;SERVER2\localuser;Pass456!
-\\SERVER2;SERVER2\localuser;Pass456!
+SERVER2;SERVER2\localuser;Pass456!
 ```
 
 ### 📁 mapdrives.csv
@@ -57,59 +55,9 @@ Ein separates FirstStart-Skript übernimmt die initiale Einrichtung:
 ├── 📂 scripts\
 │   ├── 📝 credential.csv
 │   └── 📝 mapdrives.csv
-├── 📂 proalpha\
-│   ├── 📄 CredentialFileTimestamp.txt
-│   ├── 📄 MapDrivesFileTimestamp.txt
-│   ├── 📜 mapdrives.ps1
-│   └── ⚙️ mapdrives.exe
 └── ⚙️ mapdrives.exe
 ```
 
-## 💡 Beste Praktiken für CSV-Verwaltung
-
-### 🔐 credential.csv
-
-1. **Namenskonventionen:**
-   - Domänenbenutzer: `DOMAIN\username` oder `username@domain.local`
-   - Lokale Benutzer: `HOSTNAME\username`
-
-2. **IP und Hostname Einträge:**
-   ```
-   # Für Dateiserver mit IP 192.168.1.10 und Namen SERVER1
-   192.168.1.10;DOMAIN\user1;Pass123!
-   \\SERVER1;DOMAIN\user1;Pass123!
-   ```
-
-3. **Verschiedene Szenarien:**
-   ```
-   # Domänenbenutzer (beide Formate sind möglich)
-   192.168.1.10;DOMAIN\user1;Pass123!
-   192.168.1.10;user1@domain.local;Pass123!
-
-   # Lokaler Benutzer
-   192.168.1.20;SERVER2\localadmin;Pass456!
-
-   # Mehrere Freigaben auf einem Server
-   192.168.1.10;DOMAIN\user1;Pass123!
-   192.168.1.10;DOMAIN\user2;Pass789!
-   ```
-
-### 📁 mapdrives.csv
-
-1. **Einfache Zuordnung:**
-   ```
-   P;\\SERVER1\Projekte;Projekt-Team
-   ```
-
-2. **Mehrere Gruppen:**
-   ```
-   F;\\SERVER1\Finanzen;Finanz-Team,Controlling,Geschäftsführung
-   ```
-
-3. **Ohne Gruppenbeschränkung:**
-   ```
-   X;\\SERVER1\Public;
-   ```
 
 ## ⚠️ Häufige Fehler vermeiden
 
