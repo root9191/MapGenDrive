@@ -12,6 +12,7 @@ function Write-Log {
     Write-Host "$timestamp - $Message"
 }
 
+
 # Function to test file access
 function Test-FileAccess {
     param ([string]$Path)
