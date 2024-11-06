@@ -1,6 +1,6 @@
 # Basispfade definieren
 $server = "\\dom-002"
-$basePath = "\NETLOGON"
+$basePath = "\NETLOGON\test"
 $fullBasePath = Join-Path $server $basePath
 
 # Benutzerabfrage für Task Scheduler
@@ -118,9 +118,10 @@ function Register-MapDriveTask {
         # Erstelle die Task-Aktion
         $action = New-ScheduledTaskAction -Execute $ScriptPath
 
-        # Erstelle den Task-Trigger (alle 5 Minuten)
+        # Erstelle den Task-Trigger (alle 5 Minuten für einen Tag)
         $trigger = New-ScheduledTaskTrigger -Once -At (Get-Date).Date.AddHours(6) `
-            -RepetitionInterval (New-TimeSpan -Minutes 5)
+            -RepetitionInterval (New-TimeSpan -Minutes 5) `
+            -RepetitionDuration (New-TimeSpan -Days 1)
 
         # Erstelle die Task-Einstellungen
         $settings = New-ScheduledTaskSettingsSet `
@@ -130,15 +131,25 @@ function Register-MapDriveTask {
             -DontStopIfGoingOnBatteries `
             -Priority 7
 
-        # Erstelle den Task
+        # Erstelle den Task-Principal mit höchsten Rechten
+        $principal = New-ScheduledTaskPrincipal -UserId $TaskUser -LogonType Password -RunLevel Highest
+
+        # Setze Kompatibilitätseinstellungen
+        $taskSettings = New-Object -ComObject "Schedule.Service"
+        $taskSettings.Connect()
+        $rootFolder = $taskSettings.GetFolder("\")
+        $taskDefinition = $taskSettings.NewTask(0)
+        $taskDefinition.Settings.Compatibility = 4  # Windows 8 / Server 2012 Kompatibilität
+
+        # Erstelle den Task mit allen Einstellungen
         Register-ScheduledTask -TaskName $taskName `
             -TaskPath $taskPath `
             -Action $action `
             -Trigger $trigger `
             -Settings $settings `
+            -Principal $principal `
             -User $TaskUser `
             -Password $TaskPassword `
-            -RunLevel Highest `
             -Description "Generiert das MapDrives Script" `
             -Force
 

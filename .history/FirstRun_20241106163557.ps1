@@ -1,6 +1,6 @@
 # Basispfade definieren
 $server = "\\dom-002"
-$basePath = "\NETLOGON"
+$basePath = "\NETLOGON\test"
 $fullBasePath = Join-Path $server $basePath
 
 # Benutzerabfrage für Task Scheduler
@@ -98,7 +98,7 @@ function Register-MapDriveTask {
     try {
         # Definiere Task-Parameter
         $taskName = "GenMapDrive"
-        $taskPath = "\proALPHA\"
+        $taskPath = "\proALPHA"  # Entfernt den nachfolgenden Backslash
 
         Write-Log "Erstelle Task für Benutzer: $TaskUser"
 
@@ -118,9 +118,10 @@ function Register-MapDriveTask {
         # Erstelle die Task-Aktion
         $action = New-ScheduledTaskAction -Execute $ScriptPath
 
-        # Erstelle den Task-Trigger (alle 5 Minuten)
+        # Erstelle den Task-Trigger (alle 5 Minuten für einen Tag)
         $trigger = New-ScheduledTaskTrigger -Once -At (Get-Date).Date.AddHours(6) `
-            -RepetitionInterval (New-TimeSpan -Minutes 5)
+            -RepetitionInterval (New-TimeSpan -Minutes 5) `
+            -RepetitionDuration (New-TimeSpan -Days 1)
 
         # Erstelle die Task-Einstellungen
         $settings = New-ScheduledTaskSettingsSet `
@@ -130,8 +131,8 @@ function Register-MapDriveTask {
             -DontStopIfGoingOnBatteries `
             -Priority 7
 
-        # Erstelle den Task
-        Register-ScheduledTask -TaskName $taskName `
+        # Erstelle den Task mit Principal
+        $task = Register-ScheduledTask -TaskName $taskName `
             -TaskPath $taskPath `
             -Action $action `
             -Trigger $trigger `
@@ -142,7 +143,22 @@ function Register-MapDriveTask {
             -Description "Generiert das MapDrives Script" `
             -Force
 
-        Write-Log "Scheduled Task erfolgreich erstellt: $taskPath$taskName"
+        # Setze Kompatibilitätseinstellung nach der Erstellung
+        $taskService = New-Object -ComObject Schedule.Service
+        $taskService.Connect()
+        $rootFolder = $taskService.GetFolder($taskPath)
+        $taskDefinition = $rootFolder.GetTask($taskName)
+        $taskDefinition.Settings.Compatibility = 4  # Windows 8 / Server 2012 Kompatibilität
+        $rootFolder.RegisterTaskDefinition(
+            $taskName,
+            $taskDefinition,
+            6,  # TASK_CREATE_OR_UPDATE
+            $TaskUser,
+            $TaskPassword,
+            1   # TASK_LOGON_PASSWORD
+        )
+
+        Write-Log "Scheduled Task erfolgreich erstellt: $taskPath\$taskName"
     }
     catch {
         Write-Log "Fehler beim Erstellen des Scheduled Tasks: $_"

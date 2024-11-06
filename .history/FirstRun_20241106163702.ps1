@@ -1,6 +1,6 @@
 # Basispfade definieren
 $server = "\\dom-002"
-$basePath = "\NETLOGON"
+$basePath = "\NETLOGON\test"
 $fullBasePath = Join-Path $server $basePath
 
 # Benutzerabfrage für Task Scheduler
@@ -98,29 +98,22 @@ function Register-MapDriveTask {
     try {
         # Definiere Task-Parameter
         $taskName = "GenMapDrive"
-        $taskPath = "\proALPHA\"
+        $taskPath = "\proALPHA"
 
         Write-Log "Erstelle Task für Benutzer: $TaskUser"
 
-        # Erstelle den Task-Ordner falls er nicht existiert
-        if (-not (Get-ScheduledTask -TaskPath $taskPath -ErrorAction SilentlyContinue)) {
-            $folder = Register-ScheduledTask -TaskName "_dummy" -TaskPath $taskPath -Action (New-ScheduledTaskAction -Execute "cmd.exe") | Out-Null
-            if ($folder) {
-                Unregister-ScheduledTask -TaskName "_dummy" -TaskPath $taskPath -Confirm:$false | Out-Null
-            }
-        }
-
         # Lösche den Task falls er bereits existiert
         if (Get-ScheduledTask -TaskName $taskName -TaskPath $taskPath -ErrorAction SilentlyContinue) {
-            Unregister-ScheduledTask -TaskName $taskName -TaskPath $taskPath -Confirm:$false | Out-Null
+            Unregister-ScheduledTask -TaskName $taskName -TaskPath $taskPath -Confirm:$false
         }
 
         # Erstelle die Task-Aktion
         $action = New-ScheduledTaskAction -Execute $ScriptPath
 
-        # Erstelle den Task-Trigger (alle 5 Minuten)
+        # Erstelle den Task-Trigger (alle 5 Minuten für einen Tag)
         $trigger = New-ScheduledTaskTrigger -Once -At (Get-Date).Date.AddHours(6) `
-            -RepetitionInterval (New-TimeSpan -Minutes 5)
+            -RepetitionInterval (New-TimeSpan -Minutes 5) `
+            -RepetitionDuration (New-TimeSpan -Days 1)
 
         # Erstelle die Task-Einstellungen
         $settings = New-ScheduledTaskSettingsSet `
@@ -130,19 +123,21 @@ function Register-MapDriveTask {
             -DontStopIfGoingOnBatteries `
             -Priority 7
 
+        # Erstelle Principal für den Task
+        $principal = New-ScheduledTaskPrincipal -UserID $TaskUser -LogonType Password -RunLevel Highest
+
         # Erstelle den Task
         Register-ScheduledTask -TaskName $taskName `
             -TaskPath $taskPath `
             -Action $action `
             -Trigger $trigger `
             -Settings $settings `
-            -User $TaskUser `
+            -Principal $principal `
             -Password $TaskPassword `
-            -RunLevel Highest `
             -Description "Generiert das MapDrives Script" `
             -Force
 
-        Write-Log "Scheduled Task erfolgreich erstellt: $taskPath$taskName"
+        Write-Log "Scheduled Task erfolgreich erstellt: $taskPath\$taskName"
     }
     catch {
         Write-Log "Fehler beim Erstellen des Scheduled Tasks: $_"

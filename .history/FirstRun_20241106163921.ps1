@@ -1,6 +1,6 @@
 # Basispfade definieren
 $server = "\\dom-002"
-$basePath = "\NETLOGON"
+$basePath = "\NETLOGON\test"
 $fullBasePath = Join-Path $server $basePath
 
 # Benutzerabfrage für Task Scheduler
