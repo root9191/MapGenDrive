@@ -173,8 +173,7 @@ try {
     $proAlphaPath = Join-Path $fullBasePath "proalpha"
     $proAlphaAccess = @(
         $adminGroupName,
-        "NT AUTHORITY\SYSTEM",
-        "$env:USERDOMAIN\SG-pA-Cloud"
+        "NT AUTHORITY\SYSTEM"
     )
     New-SecureFolder -Path $proAlphaPath -AccessIdentities $proAlphaAccess -IncludeCurrentUser
 
